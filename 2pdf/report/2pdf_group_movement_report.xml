@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+    <record id="group_move" model="report.paperformat">
+        <field name="name">Сгруппированный отчет по перемещениям</field>
+        <field name="default" eval="True"/>
+        <field name="format">A4</field>
+        <field name="page_height">0</field>
+        <field name="page_width">0</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">15</field>
+        <field name="margin_bottom">25.00</field>
+        <field name="margin_left">5</field>
+        <field name="margin_right">5</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">45</field>
+    </record>
+
+    <record id="group_move_report" model="ir.actions.report">
+        <field name="name">Сгруппированный отчет по перемещениям</field>
+        <field name="model">stock.picking</field>
+        <field name="report_name">2pdf.move_template</field>
+        <field name="binding_model_id" ref="stock.model_stock_picking"/>
+        <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="group_move"/>
+    </record>
+
+    <template id="move_template">
+        <t t-call="web.basic_layout">
+            <div class="page">
+                <style>
+                    table {border-top: #000000 1px solid; border-bottom: #000000 1px solid; border-right: #000000 1px solid; border-left: #000000 1px solid; table-layout: fixed; border-collapse: collapse; width: 100%;}
+                    tr {border-top: #000000 1px solid; border-bottom: #000000 1px solid; border-right: #000000 1px solid; border-left: #000000 1px solid;}
+                    td {border-top: #000000 1px solid; border-bottom: #000000 1px solid; border-right: #000000 1px solid; border-left: #000000 1px solid; padding-left: 5px;}
+                    th {border-top: #000000 1px solid; border-bottom: #000000 1px solid; border-right: #000000 1px solid; border-left: #000000 1px solid; text-align: center;}
+                    div.s1 {margin: 10px;}
+                </style>
+                <t t-set="total_list" t-value="[]"/>
+                <t t-foreach="docs" t-as="doc">
+                    <t t-set="current_list" t-value="[doc.location_id, doc.location_dest_id, doc.transport_date]"/>
+                    <t t-if="current_list not in total_list">
+                        <t t-set="total_list" t-value="total_list + [current_list]"/>
+                    </t>
+                </t>
+                    <t t-foreach="total_list" t-as="i">
+                        <t t-set="count" t-value="1"/>
+                                <table cellcpasing="0">
+                                        <col width="22%"/>
+                                        <col width="3%"/>
+                                        <col width="12.5%"/>
+                                        <col width="35%"/>
+                                        <col width="8.5%"/>
+                                        <col width="5%"/>
+                                        <col width="8.5%"/>
+                                        <col width="5%"/>
+                                            <div style="font-size:17pt; text-align: center; border-bottom: #000000 1px solid;"><b>Сгруппированный отчет по перемещениям от <t t-esc="i[2].strftime('%d/%m/%Y')"/></b></div>
+                                            <div class="s1">Организация: <u><span t-field="docs.company_id"/></u></div>
+                                            <div class="s1" style="white-space: pre-wrap;">Отправитель: <u><span t-field="i[0].display_name"/></u>              Получатель: <u><span t-field="i[1].display_name"/></u></div>
+                                            <div class="s1">Дата формирования отчета: <u><t t-esc="(datetime.datetime.today()).strftime('%d/%m/%Y')"/></u></div>
+                                            <tr>
+                                                <th>Номер перещений</th>
+                                                <th>№</th>
+                                                <th>Артикул продукции</th>
+                                                <th>Наименование продукции</th>
+                                                <th colspan="2">Количество упаковок, шт.</th>
+                                                <th colspan="2">Количество, шт.</th>
+                                            </tr>
+                                            <t t-foreach="docs" t-as="doc">
+                                                    <t t-if="doc.location_id == i[0] and doc.location_dest_id == i[1] and doc.transport_date == i[2]">
+                                                        <t t-foreach="doc.move_ids_without_package" t-as="o">
+                                                            <tr>
+                                                                <td><span t-field="doc.name"/></td>
+                                                                <td><t t-esc="count"/></td>
+                                                                <td><span t-field="o.product_id.default_code"/></td>
+                                                                <td><span t-field="o.product_id.name"/></td>
+                                                                <td><span t-field="o.quantity_done"/></td>
+                                                                <td><span t-field="o.product_uom"/></td>
+                                                                <td><span t-field="o.quantity_done"/></td>
+                                                                <td><span t-field="o.product_uom"/></td>
+                                                            </tr>
+                                                            <t t-set="count" t-value="count + 1"/>
+                                                        </t>
+                                                    </t>
+                                            </t>
+                                </table>
+                                <div class="s1">Сдал:   <u><t t-esc="user.name"/></u></div>
+                                <div class="s1">Принял:</div>
+                                <div style="page-break-after: always;"/>
+                    </t>
+            </div>
+        </t>
+    </template>
+
+    </data>
+
+</odoo>
